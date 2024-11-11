@@ -1,27 +1,15 @@
-# Stage 1: Build the application using Maven (JDK 17)
-FROM maven:3.9.9-openjdk-17-slim AS builder
+# Use OpenJDK base image
+FROM openjdk:17-jdk-alpine
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy the pom.xml (even though it's not required for this case, it could be used for future extension)
-COPY pom.xml /app/
+# Copy the compiled .jar file into the container
+COPY target/helloworld-1.0-SNAPSHOT.jar /app/helloworld.jar
 
-# Copy the HelloWorld.java file directly
-COPY HelloWorld.java /app/HelloWorld.java
+# Expose the port that the Java application will use
+EXPOSE 8080
 
-# Package the application (This will compile HelloWorld.java using Maven)
-RUN mvn clean compile
-
-# Stage 2: Run the application using JDK 17
-FROM openjdk:17-jdk-slim
-
-# Set the working directory
-WORKDIR /app
-
-# Copy the compiled class file from the build stage
-COPY --from=builder /app/target/classes/HelloWorld.class /app/HelloWorld.class
-
-# Run the application
-CMD ["java", "HelloWorld"]
+# Command to run the Java application
+CMD ["java", "-jar", "/app/helloworld.jar"]
 

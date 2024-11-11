@@ -1,33 +1,27 @@
-# Stage 1: Build the application using Maven (JDK 11)
-FROM maven:3.9.9-eclipse-temurin-11-alpine as builder
+# Stage 1: Build the application using Maven (JDK 17)
+FROM maven:3.9.9-openjdk-17-slim AS builder
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Copy the pom.xml and install dependencies
-COPY pom.xml .
+# Copy the pom.xml (even though it's not required for this case, it could be used for future extension)
+COPY pom.xml /app/
 
-# Fetch the dependencies without packaging (go offline)
-RUN mvn dependency:go-offline
+# Copy the HelloWorld.java file directly
+COPY HelloWorld.java /app/HelloWorld.java
 
-# Copy the application source code
-COPY src /app/src
+# Package the application (This will compile HelloWorld.java using Maven)
+RUN mvn clean compile
 
-# Package the application (this will create a .jar file)
-RUN mvn clean package -DskipTests
+# Stage 2: Run the application using JDK 17
+FROM openjdk:17-jdk-slim
 
-# Stage 2: Run the application using JDK 11
-FROM openjdk:11-jdk-slim
-
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Copy the JAR file from the build stage
-COPY --from=builder /app/target/*.jar /app/helloworld.jar
-
-# Expose the application port (if it's a web application)
-EXPOSE 8080
+# Copy the compiled class file from the build stage
+COPY --from=builder /app/target/classes/HelloWorld.class /app/HelloWorld.class
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "/app/helloworld.jar"]
+CMD ["java", "HelloWorld"]
 
